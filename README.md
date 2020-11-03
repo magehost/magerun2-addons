@@ -29,15 +29,15 @@ Commands
 
 Using this command, you can see our fancy hello world, this is used as a template for new commands
 
-    magerun2 magerun:helloworld
+    magerun2 magehost:helloworld
 
 ### Lock admin
-Using this command, you lock all unlocked admin users, this will also write the locked user_ids in `~/.locked_admin_users`
+Using this command, you lock all active admin users, this will also write the locked user_ids in `~/.locked_admin_users`
 
-    magerun2 magerun:admin:lock
+    magerun2 magehost:admin:lock
 
 ### Unlock admin
 Using this command, you unlock admin users locked by us, this will read the ids from `~/.locked_admin_users`
 
-    magerun2 magerun:admin:unlock
+    magerun2 magehost:admin:unlock
 

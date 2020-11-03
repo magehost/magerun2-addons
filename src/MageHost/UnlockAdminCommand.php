@@ -35,11 +35,11 @@ class UnlockAdminCommand extends AbstractMagentoCommand
             return;
         }
 
-        if (!file_exists($_SERVER['HOME'] . '/tmp/locked_users.txt')) {
+        if (!file_exists($_SERVER['HOME'] . '/.locked_admin_users')) {
             return $output->writeln('<error>No locked users file found!</error>');
         }
 
-        $lockedUsersRaw = file_get_contents($_SERVER['HOME'] . '/tmp/locked_users.txt');
+        $lockedUsersRaw = file_get_contents($_SERVER['HOME'] . '/.locked_admin_users');
 
         if (!$lockedUsersRaw) {
             return $output->writeln('<error>Locked users file is empty.</error>');
@@ -55,7 +55,7 @@ class UnlockAdminCommand extends AbstractMagentoCommand
             $this->userResourceModel->save($user);
         }
 
-        file_put_contents($_SERVER['HOME'] . '/tmp/locked_users.txt', '');
+        file_put_contents($_SERVER['HOME'] . '/.locked_admin_users', '');
 
         return $output->writeln('<info>Admin is unlocked!</info>');
     }

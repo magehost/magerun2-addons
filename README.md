@@ -32,12 +32,12 @@ Using this command, you can see our fancy hello world, this is used as a templat
     magerun2 magerun:helloworld
 
 ### Lock admin
-Using this command, you lock all unlocked admin users, this will also write the locked user_ids in `~/tmp/locked_users.txt`
+Using this command, you lock all unlocked admin users, this will also write the locked user_ids in `~/.locked_admin_users`
 
     magerun2 magerun:admin:lock
 
 ### Unlock admin
-Using this command, you unlock admin users locked by us, this will read the ids from `~/tmp/locked_users.txt`
+Using this command, you unlock admin users locked by us, this will read the ids from `~/.locked_admin_users`
 
     magerun2 magerun:admin:unlock
 

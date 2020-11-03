@@ -36,27 +36,21 @@ class LockAdminCommand extends AbstractMagentoCommand
         }
 
         $collection = $this->userCollectionFactory->create();
+        $collection->addFieldToFilter('main_table.is_active', true);
         $users = $collection->getItems();
 
         $lockedUsers = [];
 
         foreach ($users as $user) {
-            if ($user->getIsActive()) {
-                $user->setIsActive(false);
-                array_push($lockedUsers, $user->getId());
-                $this->userResourceModel->save($user);
-            }
+            array_push($lockedUsers, $user->getId());
+            $this->userResourceModel->save($user);
         }
 
         if (count($lockedUsers) == 0) {
             return $output->writeln('<error>No unlocked users found!</error>');
         }
 
-        if (!file_exists($_SERVER['HOME'] . '/tmp')) {
-            mkdir($_SERVER['HOME'] . '/tmp', 0700, true);
-        }
-
-        file_put_contents($_SERVER['HOME'] . '/tmp/locked_users.txt', implode(',', $lockedUsers));
+        file_put_contents($_SERVER['HOME'] . '/.locked_admin_users', implode(',', $lockedUsers));
 
         return $output->writeln('<info>Admin is locked!</info>');
     }

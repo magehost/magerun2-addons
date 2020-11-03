@@ -42,6 +42,7 @@ class LockAdminCommand extends AbstractMagentoCommand
         $lockedUsers = [];
 
         foreach ($users as $user) {
+            $user->setIsActive(false);
             array_push($lockedUsers, $user->getId());
             $this->userResourceModel->save($user);
         }

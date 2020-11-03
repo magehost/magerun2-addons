@@ -1,0 +1,8 @@
+autoloaders:
+    MageHost: %module%/src
+
+commands:
+    customCommands:
+        - MageHost\HelloWorldCommand
+        - MageHost\LockAdminCommand
+        - MageHost\UnlockAdminCommand

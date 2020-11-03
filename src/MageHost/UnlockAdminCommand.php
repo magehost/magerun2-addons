@@ -51,10 +51,8 @@ class UnlockAdminCommand extends AbstractMagentoCommand
         $users = $collection->getItems();
 
         foreach ($users as $user) {
-            if ($user->getIsActive()) {
-                $user->setIsActive(true);
-                $this->userResourceModel->save($user);
-            }
+            $user->setIsActive(true);
+            $this->userResourceModel->save($user);
         }
 
         file_put_contents($_SERVER['HOME'] . '/tmp/locked_users.txt', '');

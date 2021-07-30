@@ -41,3 +41,9 @@ Using this command, you unlock admin users locked by us, this will read the ids 
 
     magerun2 magehost:admin:unlock
 
+### Check performance
+Using this command, you can check for the most common performance failures in your environment
+
+    magerun2 magehost:performance:check
+
+

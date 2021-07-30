@@ -3,6 +3,7 @@ autoloaders:
 
 commands:
     customCommands:
+        - MageHost\CheckPerformanceCommand
         - MageHost\HelloWorldCommand
         - MageHost\LockAdminCommand
         - MageHost\UnlockAdminCommand

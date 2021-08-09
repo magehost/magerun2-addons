@@ -19,11 +19,12 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Cache\Frontend\Pool;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Session\SaveHandlerInterface;
-use Magento\Framework\Session\Config;
+use Magento\Framework\Session\Config as SessionConfig;
 use Magento\Framework\App\Utility\Files;
 use Magento\Theme\Model\ResourceModel\Theme\Collection as ThemeCollection;
 use Magento\Config\Model\ResourceModel\Config\Data\Collection as ConfigCollection;
 use Magento\PageCache\Model\Config as CacheConfig;
+use Magento\Config\Model\Config;
 
 /**
  * Class CheckPerformanceCommand
@@ -32,19 +33,6 @@ use Magento\PageCache\Model\Config as CacheConfig;
  */
 class CheckPerformanceCommand extends AbstractMagentoCommand
 {
-    /**
-     *
-     */
-    const STATUS_OK = '<info>ok</info>';
-    /**
-     *
-     */
-    const STATUS_PROBLEM = '<error>problem</error>';
-    /**
-     *
-     */
-    const STATUS_UNKNOWN = '<warning>unknown</warning>';
-
     /**
      * @var
      */
@@ -81,6 +69,11 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
      * @var
      */
     protected $configCollection;
+
+    /**
+     * @var
+     */
+    protected $input;
 
     /**
      * @param  State                     $appState
@@ -143,16 +136,15 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         if (!$this->initMagento()) {
             return 0;
         }
+
+        $this->input = $input;
         $section = $output->section();
+
         if ($input->getOption('format') === null) {
             $section->writeln(
                 [
                     '',
-                    $this->getHelper('formatter')->formatBlock(
-                        'Loading...',
-                        'bg=blue;fg=white',
-                        true
-                    ),
+                    $this->fromatInfoMessage('Loading...'),
                     '',
                 ]
             );
@@ -163,46 +155,36 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             $this->productMetaData->getVersion()
         );
 
-        $table = array();
-
-        array_push($table, $this->getPHPVersionRow());
-        array_push($table, $this->getPHPConfigRow());
-        array_push($table, $this->getAppModeRow());
-        array_push($table, $this->getHttpVersionRow());
-        array_push(
-            $table,
+        $table = array(
+            $this->getPHPVersionRow(),
+            $this->getPHPConfigRow(),
+            $this->getAppModeRow(),
+            $this->getHttpVersionRow(),
             $this->getCacheStorageRow(
                 'Magento Cache Storage',
                 'default',
                 'Cm_Cache_Backend_Redis',
                 '/config-guide/redis/redis-pg-cache.html'
-            )
-        );
-        array_push(
-            $table,
+            ),
             $this->getCacheStorageRow(
                 'Full Page Cache Storage',
                 'page_cache',
                 'Cm_Cache_Backend_Redis',
                 '/config-guide/redis/redis-pg-cache.html'
-            )
+            ),
+            $this->getSessionStorageRow(),
+            $this->getNonCacheableLayoutsRow(),
+            $this->getComposerAutoloaderRow(),
+            $this->getFullPageCacheApplicationRow(),
+            $this->getAsyncEmailRow(),
+            $this->getAsyncIndexingRow(),
         );
-        array_push($table, $this->getSessionStorageRow());
-        array_push($table, $this->getNonCacheableLayoutsRow());
-        array_push($table, $this->getComposerAutoloaderRow());
-        array_push($table, $this->getFullPageCacheApplicationRow());
-        array_push($table, $this->getAsyncEmailRow());
-        array_push($table, $this->getAsyncIndexingRow());
 
         if ($input->getOption('format') === null) {
             $section->overwrite(
                 [
                     '',
-                    $this->getHelper('formatter')->formatBlock(
-                        'Magehost Performance Dashboard',
-                        'bg=blue;fg=white',
-                        true
-                    ),
+                    $this->fromatInfoMessage('Magehost Performance Dashboard'),
                     '',
                 ]
             );
@@ -224,7 +206,11 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         return array(
             'PHP version',
-            $versionCompare ? self::STATUS_OK : self::STATUS_PROBLEM,
+            $versionCompare
+                ? $this->formatStatus('STATUS_OK')
+                : $this->formatStatus(
+                'STATUS_PROBLEM'
+            ),
             $showVersion,
             '>= 7.0.0',
         );
@@ -247,14 +233,20 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         $problems = '';
         $current = '';
-        $ok = true;
+        $status = $this->formatStatus('STATUS_OK');
 
         foreach ($values as $key => $value) {
             $curValue = ini_get($key);
-            if (false === $curValue || (!in_array($key, $minimalValues) && ini_get($key) != $value)
-                || (in_array($key, $minimalValues) && ini_get($key) < $value)
-            ) {
-                $ok = false;
+            if (false === $curValue) {
+                $status = $this->formatStatus('STATUS_PROBLEM');
+            }
+
+            if (!in_array($key, $minimalValues) && ini_get($key) != $value) {
+                $status = $this->formatStatus('STATUS_PROBLEM');
+            }
+
+            if (in_array($key, $minimalValues) && ini_get($key) < $value) {
+                $status = $this->formatStatus('STATUS_PROBLEM');
             }
 
             $current .= $key.' = '.$curValue."\n";
@@ -262,16 +254,17 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         $recommended = '';
         foreach ($values as $key => $value) {
-            if (in_array($key, $minimalValues)) {
-                $recommended .= $key.' > '.$value."\n";
-            } else {
-                $recommended .= $key.' = '.$value."\n";
+            $recommendedRow = $key.' > '.$value."\n";
+            if (!in_array($key, $minimalValues)) {
+                $recommendedRow = $key.' = '.$value."\n";
             }
+
+            $recommended .= $recommendedRow;
         }
 
         return array(
             'PHP configuration',
-            $ok ? self::STATUS_OK : self::STATUS_PROBLEM,
+            $status,
             trim($current),
             trim($recommended),
         );
@@ -286,7 +279,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         return array(
             'Magento mode',
-            $appMode == State::MODE_PRODUCTION ? self::STATUS_OK : self::STATUS_PROBLEM,
+            $appMode == State::MODE_PRODUCTION ? $this->formatStatus('STATUS_OK')
+                : $this->formatStatus('STATUS_PROBLEM'),
             $appMode,
             State::MODE_PRODUCTION,
         );
@@ -297,7 +291,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
      */
     public function getHttpVersionRow()
     {
-        $status = self::STATUS_OK;
+        $status = $this->formatStatus('STATUS_OK');
         $finalVersion = null;
         $serverProtocol = $this->request->getServerValue('SERVER_PROTOCOL');
         if (!empty($serverProtocol)) {
@@ -340,7 +334,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
                     $frontUrl,
                     $e->getMessage()
                 );
-                $status = self::STATUS_UNKNOWN;
+                $status = $this->formatStatus('STATUS_UNKNOWN');
             }
 
             if (!empty($httpResponse)) {
@@ -362,7 +356,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             }
 
             if (!$finalVersion) {
-                $status = self::STATUS_PROBLEM;
+                $status = $this->formatStatus('STATUS_PROBLEM');
             }
         }
 
@@ -385,7 +379,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         return array(
             $name,
-            $currentBackendClass == $expectedBackendClass ? self::STATUS_OK : self::STATUS_PROBLEM,
+            $currentBackendClass == $expectedBackendClass ? $this->formatStatus('STATUS_OK')
+                : $this->formatStatus('STATUS_PROBLEM'),
             $currentBackendClass,
             $expectedBackendClass,
         );
@@ -400,14 +395,15 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             ?:
             SaveHandlerInterface::DEFAULT_HANDLER;
         $saveHandler = $this->deploymentConfig->get(
-            Config::PARAM_SESSION_SAVE_METHOD,
+            SessionConfig::PARAM_SESSION_SAVE_METHOD,
             $defaultSaveHandler
         );
         $recommended = array('redis', 'memcache', 'memcached');
 
         return array(
             'Session Storage',
-            in_array($saveHandler, $recommended) ? self::STATUS_OK : self::STATUS_PROBLEM,
+            in_array($saveHandler, $recommended) ? $this->formatStatus('STATUS_OK')
+                : $this->formatStatus('STATUS_PROBLEM'),
             $saveHandler,
             implode(' or ', $recommended),
         );
@@ -468,7 +464,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         return array(
             'Non Cacheable Layouts',
-            count($badNonCacheAbleElements) > 0 ? self::STATUS_PROBLEM : self::STATUS_OK,
+            count($badNonCacheAbleElements) > 0 ? $this->formatStatus('STATUS_PROBLEM')
+                : $this->formatStatus('STATUS_OK'),
             implode("\n", array_unique($badNonCacheAbleElements)),
             'none',
         );
@@ -481,7 +478,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
     {
         $title = 'Composer autoloader';
         $recommended = 'Optimized autoloader (composer dump-autoload -o --apcu)';
-        $status = self::STATUS_OK;
+        $status = $this->formatStatus('STATUS_OK');
+        $current = 'Composer\'s autoloader is optimized';
         $classLoader = null;
         foreach (spl_autoload_functions() as $function) {
             if (is_array($function)
@@ -494,19 +492,17 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         if (empty($classLoader)) {
             $current = 'Could not find Composer AutoLoader';
-            $status = self::STATUS_UNKNOWN;
+            $status = $this->formatStatus('STATUS_UNKNOWN');
         }
-        if (array_key_exists(
-            \Magento\Config\Model\Config::class,
+
+        if (!array_key_exists(
+            Config::class,
             $classLoader->getClassMap()
         )
         ) {
-            $current = 'Composer\'s autoloader is optimized';
-        } else {
-            $status = self::STATUS_PROBLEM;
+            $status = $this->formatStatus('STATUS_PROBLEM');
             $current = 'Composer\'s autoloader is not optimized.';
         }
-
 
         return array($title, $status, $current, $recommended);
     }
@@ -519,13 +515,19 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $cachingApplication = $this->getConfigValuesByPath(
             'system/full_page_cache/caching_application'
         );
-        $status = in_array(CacheConfig::BUILT_IN, $cachingApplication) ? self::STATUS_PROBLEM
-            : self::STATUS_OK;
+
+        $status = $this->formatStatus('STATUS_OK');
+        $message = 'Varnish Cache';
+
+        if (!in_array(CacheConfig::BUILT_IN, $cachingApplication)) {
+            $status = $this->formatStatus('STATUS_PROBLEM');
+            $message = 'Built in';
+        }
 
         return array(
             'Full Page Cache',
             $status,
-            in_array(CacheConfig::BUILT_IN, $cachingApplication) ? 'Built in' : 'Varnish Cache',
+            $message,
             'Varnish Cache',
         );
     }
@@ -535,16 +537,18 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
      */
     protected function getAsyncEmailRow()
     {
-        $status = self::STATUS_OK;
+        $status = $this->formatStatus('STATUS_OK');
+        $message = 'Enabled';
         $cachingApplication = $this->getConfigValuesByPath('sales_email/general/async_sending');
         if (!$cachingApplication || !in_array(true, $cachingApplication)) {
-            $status = self::STATUS_PROBLEM;
+            $status = $this->formatStatus('STATUS_PROBLEM');
+            $message = 'Disabled';
         }
 
         return array(
             'Asynchronous sending of sales emails',
             $status,
-            $status === self::STATUS_OK ? 'Enabled' : 'Disabled',
+            $message,
             'Enabled',
         );
     }
@@ -554,16 +558,18 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
      */
     protected function getAsyncIndexingRow()
     {
-        $status = self::STATUS_OK;
+        $status = $this->formatStatus('STATUS_OK');
+        $message = 'Enabled';
         $cachingApplication = $this->getConfigValuesByPath('dev/grid/async_indexing');
         if (!$cachingApplication || !in_array(true, $cachingApplication)) {
-            $status = self::STATUS_PROBLEM;
+            $status = $this->formatStatus('STATUS_PROBLEM');
+            $message = 'Disabled';
         }
 
         return array(
             'Asynchronous Indexing',
             $status,
-            $status === self::STATUS_OK ? 'Enabled' : 'Disabled',
+            $message,
             'Enabled',
         );
     }
@@ -579,5 +585,52 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
         return $this->configCollection->addFieldToFilter('path', $path)->addFieldToSelect('value')
             ->getColumnValues('value');
+    }
+
+    /**
+     * @param $message
+     *
+     * @return mixed
+     */
+    protected function fromatInfoMessage($message)
+    {
+        return $this->getHelper('formatter')->formatBlock(
+            $message,
+            'bg=blue;fg=white',
+            true
+        );
+    }
+
+    /**
+     * @param $status
+     *
+     * @return string
+     */
+    protected function formatStatus($status)
+    {
+        $input = $this->input;
+        if ($status === 'STATUS_OK') {
+            if ($input->getOption('format') !== null) {
+                return 'ok';
+            }
+
+            return '<info>ok</info>';
+        }
+
+        if ($status === 'STATUS_PROBLEM') {
+            if ($input->getOption('format') !== null) {
+                return 'problem';
+            }
+
+            return '<error>problem</error>';
+        }
+
+        if ($status === 'STATUS_UNKNOWN') {
+            if ($input->getOption('format') !== null) {
+                return 'unknown';
+            }
+
+            return '<warning>unknown</warning>';
+        }
     }
 }

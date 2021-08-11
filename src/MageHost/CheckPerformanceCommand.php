@@ -30,8 +30,6 @@ use Magento\Framework\App\ProductMetadataInterface;
 class CheckPerformanceCommand extends AbstractMagentoCommand
 {
 
-    protected $productMetaData;
-
     protected $phpVersionRow;
 
     protected $phpConfigRow;
@@ -55,6 +53,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
     protected $asyncIndexingRow;
 
     protected $minifySettingsRow;
+
+    protected $productMetaData;
 
     /**
      * @param PHPVersionRow $phpVersionRow 
@@ -158,12 +158,12 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
                 'Magento Cache Storage',
                 'default',
-                'Cm_Cache_Backend_Redis'
+                ['Cm_Cache_Backend_Redis', 'Magento\Framework\Cache\Backend\Redis']
             ),
             $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
                 'Full Page Cache Storage',
                 'page_cache',
-                'Cm_Cache_Backend_Redis'
+                ['Cm_Cache_Backend_Redis', 'Magento\Framework\Cache\Backend\Redis']
             ),
             $this->sessionStorageRow->setInputFormat($inputFormat)->getRow(),
             $this->nonCacheableLayoutsRow->setInputFormat($inputFormat)->getRow(),

@@ -32,7 +32,7 @@ class CacheStorageRow extends AbstractRow
      * @return array 
      * @throws InvalidArgumentException 
      */
-    public function getRow($name, $identifier, $expectedBackendClass)
+    public function getRow($name, $identifier, $expectedBackendClasses)
     {
         $currentBackend = $this->pool->get(
             $identifier
@@ -41,10 +41,10 @@ class CacheStorageRow extends AbstractRow
 
         return array(
             $name,
-            $currentBackendClass == $expectedBackendClass ? $this->formatStatus('STATUS_OK')
+            in_array($currentBackendClass, $expectedBackendClasses) ? $this->formatStatus('STATUS_OK')
                 : $this->formatStatus('STATUS_PROBLEM'),
             $currentBackendClass,
-            $expectedBackendClass,
+            implode(' or ', $expectedBackendClasses),
         );
     }
 }

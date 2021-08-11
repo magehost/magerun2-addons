@@ -179,7 +179,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             $section->overwrite(
                 [
                     '',
-                    $this->fromatInfoMessage('Magehost Performance Dashboard'),
+                    $this->fromatInfoMessage('MageHost Performance Dashboard'),
                     '',
                 ]
             );

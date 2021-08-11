@@ -3,6 +3,7 @@
 namespace MageHost\CheckPerformanceRows;
 
 use Composer\Autoload\ClassLoader;
+use Magento\Config\Model\Config;
 
 /**
  * Class ComposerAutoloaderRow 

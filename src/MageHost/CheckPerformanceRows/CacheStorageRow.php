@@ -4,6 +4,8 @@ namespace MageHost\CheckPerformanceRows;
 
 use InvalidArgumentException;
 use Magento\Framework\App\Cache\Frontend\Pool;
+use Magento\Config\Model\ResourceModel\Config\Data\Collection as ConfigCollection;
+use Magento\PageCache\Model\Config as CacheConfig;
 
 /**
  * Class CacheStorageRow 
@@ -19,9 +21,10 @@ class CacheStorageRow extends AbstractRow
      * 
      * @return void 
      */
-    public function __construct(Pool $pool)
+    public function __construct(Pool $pool, ConfigCollection $configCollection)
     {
         $this->pool = $pool;
+        $this->configCollection = $configCollection;
     }
 
     /**

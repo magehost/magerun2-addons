@@ -16,10 +16,13 @@ use MageHost\CheckPerformanceRows\FullPageCacheApplicationRow;
 use MageHost\CheckPerformanceRows\AsyncEmailRow;
 use MageHost\CheckPerformanceRows\AsyncIndexingRow;
 use MageHost\CheckPerformanceRows\MinifySettingsRow;
+use MageHost\CheckPerformanceRows\VarnishHitrateRow;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use N98\Util\Console\Helper\Table\Renderer\RendererFactory;
+use Magento\Config\Model\ResourceModel\Config\Data\Collection as ConfigCollection;
+use Magento\PageCache\Model\Config as CacheConfig;
 
 /**
  * Class CheckPerformanceCommand
@@ -55,6 +58,10 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
     protected $productMetaData;
 
+    protected $varnishHitrateRow;
+
+    protected $configCollection;
+
     /**
      * @param PHPVersionRow $phpVersionRow 
      * @param PHPConfigRow $phpConfigRow 
@@ -83,7 +90,9 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         FullPageCacheApplicationRow $fullPageCacheApplicationRow,
         AsyncEmailRow $asyncEmailRow,
         AsyncIndexingRow $asyncIndexingRow,
-        MinifySettingsRow $minifySettingsRow
+        MinifySettingsRow $minifySettingsRow,
+        VarnishHitrateRow $varnishHitrateRow,
+        ConfigCollection $configCollection
     ) {
         $this->phpVersionRow = $phpVersionRow;
         $this->phpConfigRow = $phpConfigRow;
@@ -97,6 +106,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $this->asyncEmailRow = $asyncEmailRow;
         $this->asyncIndexingRow = $asyncIndexingRow;
         $this->minifySettingsRow = $minifySettingsRow;
+        $this->varnishHitrateRow = $varnishHitrateRow;
+        $this->configCollection = $configCollection;
     }
 
 
@@ -141,28 +152,37 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             );
         }
 
-        $table = array(
-            $this->phpVersionRow->setInputFormat($inputFormat)->getRow(),
-            $this->phpConfigRow->setInputFormat($inputFormat)->getRow(),
-            $this->appModeRow->setInputFormat($inputFormat)->getRow(),
-            $this->httpVersionRow->setInputFormat($inputFormat)->getRow(),
-            $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
-                'Magento Cache Storage',
-                'default',
-                ['Cm_Cache_Backend_Redis', 'Magento\Framework\Cache\Backend\Redis']
-            ),
-            $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
+        $cachingApplication = $this->getConfigValuesByPath(
+            'system/full_page_cache/caching_application'
+        );
+
+        $table = array();
+        array_push($table, $this->phpVersionRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->phpConfigRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->appModeRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->httpVersionRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
+            'Magento Cache Storage',
+            'default',
+            ['Cm_Cache_Backend_Redis', 'Magento\Framework\Cache\Backend\Redis']
+        ));
+
+        if (!in_array(CacheConfig::VARNISH, $cachingApplication)) {
+            array_push($table, $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(
                 'Full Page Cache Storage',
                 'page_cache',
                 ['Cm_Cache_Backend_Redis', 'Magento\Framework\Cache\Backend\Redis']
-            ),
-            $this->sessionStorageRow->setInputFormat($inputFormat)->getRow(),
-            $this->nonCacheableLayoutsRow->setInputFormat($inputFormat)->getRow(),
-            $this->composerAutoloaderRow->setInputFormat($inputFormat)->getRow(),
-            $this->fullPageCacheApplicationRow->setInputFormat($inputFormat)->getRow(),
-            $this->asyncEmailRow->setInputFormat($inputFormat)->getRow(),
-            $this->asyncIndexingRow->setInputFormat($inputFormat)->getRow(),
-        );
+            ));
+        }
+        array_push($table, $this->sessionStorageRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->nonCacheableLayoutsRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->composerAutoloaderRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->fullPageCacheApplicationRow->setInputFormat($inputFormat)->getRow());
+        if (in_array(CacheConfig::VARNISH, $cachingApplication)) {
+            array_push($table, $this->varnishHitrateRow->setInputFormat($inputFormat)->getRow());
+        }
+        array_push($table, $this->asyncEmailRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->asyncIndexingRow->setInputFormat($inputFormat)->getRow());
 
         $table = array_merge($table, $this->minifySettingsRow->setInputFormat($inputFormat)->getRow());
 
@@ -193,5 +213,18 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
             'bg=blue;fg=white',
             true
         );
+    }
+
+    /**
+     * @param $path
+     *
+     * @return mixed
+     */
+    protected function getConfigValuesByPath($path)
+    {
+        $this->configCollection->clear()->getSelect()->reset(\Zend_Db_Select::WHERE);
+
+        return $this->configCollection->addFieldToFilter('path', $path)->addFieldToSelect('value')
+            ->getColumnValues('value');
     }
 }

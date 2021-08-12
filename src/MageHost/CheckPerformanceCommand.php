@@ -20,7 +20,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use N98\Util\Console\Helper\Table\Renderer\RendererFactory;
-use Magento\Framework\App\ProductMetadataInterface;
 
 /**
  * Class CheckPerformanceCommand
@@ -69,7 +68,6 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
      * @param AsyncEmailRow $asyncEmailRow 
      * @param AsyncIndexingRow $asyncIndexingRow 
      * @param MinifySettingsRow $minifySettingsRow 
-     * @param ProductMetadataInterface $productMetadata 
      * 
      * @return void 
      */
@@ -85,8 +83,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         FullPageCacheApplicationRow $fullPageCacheApplicationRow,
         AsyncEmailRow $asyncEmailRow,
         AsyncIndexingRow $asyncIndexingRow,
-        MinifySettingsRow $minifySettingsRow,
-        ProductMetadataInterface $productMetadata
+        MinifySettingsRow $minifySettingsRow
     ) {
         $this->phpVersionRow = $phpVersionRow;
         $this->phpConfigRow = $phpConfigRow;
@@ -100,7 +97,6 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $this->asyncEmailRow = $asyncEmailRow;
         $this->asyncIndexingRow = $asyncIndexingRow;
         $this->minifySettingsRow = $minifySettingsRow;
-        $this->productMetaData = $productMetadata;
     }
 
 
@@ -144,11 +140,6 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
                 ]
             );
         }
-
-        $magentoVersionArray = explode(
-            '.',
-            $this->productMetaData->getVersion()
-        );
 
         $table = array(
             $this->phpVersionRow->setInputFormat($inputFormat)->getRow(),

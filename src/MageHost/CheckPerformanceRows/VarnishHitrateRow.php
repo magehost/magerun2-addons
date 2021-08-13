@@ -4,9 +4,10 @@
 
 namespace MageHost\CheckPerformanceRows;
 
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Store\Model\StoreManagerInterface;
+use Symfony\Component\Process\Exception\LogicException;
+use Symfony\Component\Process\Exception\RuntimeException;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\Process;
 
 /**
@@ -16,17 +17,19 @@ use Symfony\Component\Process\Process;
  */
 class VarnishHitrateRow extends AbstractRow
 {
-    public function __construct()
-    {
-    }
-
+    /**
+     * 
+     * @return (string|void)[] 
+     * @throws LogicException 
+     * @throws RuntimeException 
+     * @throws ProcessTimedOutException 
+     * @throws ProcessSignaledException 
+     */
     public function getRow()
     {
-        $status = $this->formatStatus('STATUS_OK');
-        $process = new Process(['varnishstat', '-j', '-f', 'MAIN.cache_hit', '-f', 'MAIN.cache_miss']);
+        $process = Process::fromShellCommandline('/bin/bash -li -c "varnishstat -j -f MAIN.cache_hit -f MAIN.cache_miss"');
         $process->start();
         $process->wait();
-        var_dump($process);
         if (!$process->isSuccessful()) {
             return array(
                 'Varnish Hitrate',

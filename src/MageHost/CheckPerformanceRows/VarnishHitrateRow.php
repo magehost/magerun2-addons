@@ -28,10 +28,9 @@ class VarnishHitrateRow extends AbstractRow
     public function getRow()
     {
         $status = $this->formatStatus('STATUS_OK');
-        $process = Process::fromShellCommandline('/bin/bash -li -c "varnishstat -j -f MAIN.cache_hit -f MAIN.cache_miss"');
-        $process->start();
-        $process->wait();
-        if (!$process->isSuccessful()) {
+        $result = shell_exec('/bin/bash -li -c "varnishstat -j -f MAIN.cache_hit -f MAIN.cache_miss" 2>/dev/null');
+
+        if (!$result) {
             return array(
                 'Varnish Hitrate',
                 $this->formatStatus('STATUS_UNKNOWN'),
@@ -40,7 +39,7 @@ class VarnishHitrateRow extends AbstractRow
             );
         }
 
-        $varnishStats = json_decode($process->getOutput(), true);
+        $varnishStats = json_decode($result, true);
         if (json_last_error()) {
             return array(
                 'Varnish Hitrate',
@@ -65,7 +64,7 @@ class VarnishHitrateRow extends AbstractRow
             $status = $this->formatStatus('STATUS_PROBLEM');
         }
         return array(
-            'Varnish Hitrate',
+            'Average Varnish Hitrate',
             $status,
             round($hitrate * 100, 0) . '%',
             '> 80%',

@@ -27,6 +27,7 @@ class VarnishHitrateRow extends AbstractRow
      */
     public function getRow()
     {
+        $status = $this->formatStatus('STATUS_OK');
         $process = Process::fromShellCommandline('/bin/bash -li -c "varnishstat -j -f MAIN.cache_hit -f MAIN.cache_miss"');
         $process->start();
         $process->wait();

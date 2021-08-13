@@ -69,23 +69,25 @@ class NonCacheableLayoutsRow extends AbstractRow
 
         $badNonCacheAbleElements = array();
         foreach ($files as $file) {
-            $xml = simplexml_load_file($file);
-            $elements = $xml->xpath('//*[@cacheable="false"]');
-            foreach ($elements as $element) {
-                $needsLogging = false;
+            $xml = simplexml_load_file($file, "SimpleXMLElement", LIBXML_NOERROR |  LIBXML_ERR_NONE);
+            if ($xml) {
+                $elements = $xml->xpath('//*[@cacheable="false"]');
+                foreach ($elements as $element) {
+                    $needsLogging = false;
 
-                if (
-                    preg_match('(' . implode('|', $elementsToInclude) . ')', $file) === 1
-                    || preg_match(
-                        '(' . implode('|', $elementsToInclude) . ')',
-                        $element['name']
-                    ) === 1
-                ) {
-                    $needsLogging = true;
-                }
+                    if (
+                        preg_match('(' . implode('|', $elementsToInclude) . ')', $file) === 1
+                        || preg_match(
+                            '(' . implode('|', $elementsToInclude) . ')',
+                            $element['name']
+                        ) === 1
+                    ) {
+                        $needsLogging = true;
+                    }
 
-                if ($needsLogging && strpos($element['name'], 'compare') === false) {
-                    array_push($badNonCacheAbleElements, $element['name']);
+                    if ($needsLogging && strpos($element['name'], 'compare') === false) {
+                        array_push($badNonCacheAbleElements, $element['name']);
+                    }
                 }
             }
         }

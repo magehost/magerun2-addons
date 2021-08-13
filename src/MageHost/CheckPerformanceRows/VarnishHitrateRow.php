@@ -55,7 +55,7 @@ class VarnishHitrateRow extends AbstractRow
             'Average Varnish Hitrate',
             $status,
             round($hitrate * 100, 0) . '%',
-            '> 80%',
+            '>= 80%',
         );
     }
 }

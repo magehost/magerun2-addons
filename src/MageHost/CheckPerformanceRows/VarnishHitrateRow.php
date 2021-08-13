@@ -28,9 +28,8 @@ class VarnishHitrateRow extends AbstractRow
     public function getRow()
     {
         $status = $this->formatStatus('STATUS_OK');
-        $result = shell_exec('/bin/bash -li -c "varnishstat -j -f MAIN.cache_hit -f MAIN.cache_miss" 2>/dev/null');
-
-        if (!$result) {
+        exec('/bin/bash -li -c "varnishstat -1 -f MAIN.cache_hit -f MAIN.cache_miss" 2>/dev/null', $output, $resultCode);
+        if ($resultCode) {
             return array(
                 'Varnish Hitrate',
                 $this->formatStatus('STATUS_UNKNOWN'),
@@ -39,27 +38,16 @@ class VarnishHitrateRow extends AbstractRow
             );
         }
 
-        $varnishStats = json_decode($result, true);
-        if (json_last_error()) {
-            return array(
-                'Varnish Hitrate',
-                $this->formatStatus('STATUS_UNKNOWN'),
-                'Could not parse Varnishstat',
-                '> 80%',
-            );
+
+        $parsedValues = array();
+        foreach ($output as $line) {
+            if (strpos($line, 'MAIN.cache_hit') !== false || strpos($line, 'MAIN.cache_miss') !== false) {
+                $parts = preg_split('/\s+/', $line);
+                $parsedValues[$parts[0]] = $parts[1];
+            }
         }
 
-        $counters = $varnishStats['counters'];
-        if (!isset($counters) || count($counters) == 0) {
-            return array(
-                'Varnish Hitrate',
-                $this->formatStatus('STATUS_UNKNOWN'),
-                'Could not find counters info',
-                '> 80%',
-            );
-        }
-
-        $hitrate = $counters['MAIN.cache_hit']['value'] / ($counters['MAIN.cache_hit']['value'] + $counters['MAIN.cache_miss']['value']);
+        $hitrate = $parsedValues['MAIN.cache_hit'] / ($parsedValues['MAIN.cache_hit'] + $parsedValues['MAIN.cache_miss']);
         if ($hitrate < '0.8') {
             $status = $this->formatStatus('STATUS_PROBLEM');
         }

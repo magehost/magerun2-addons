@@ -17,6 +17,7 @@ use MageHost\CheckPerformanceRows\AsyncEmailRow;
 use MageHost\CheckPerformanceRows\AsyncIndexingRow;
 use MageHost\CheckPerformanceRows\MinifySettingsRow;
 use MageHost\CheckPerformanceRows\VarnishHitrateRow;
+use MageHost\CheckPerformanceRows\MoveScriptRow;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -60,6 +61,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
     protected $varnishHitrateRow;
 
+    protected $moveScriptRow;
+
     protected $configCollection;
 
     /**
@@ -92,6 +95,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         AsyncIndexingRow $asyncIndexingRow,
         MinifySettingsRow $minifySettingsRow,
         VarnishHitrateRow $varnishHitrateRow,
+        MoveScriptRow $moveScriptRow,
         ConfigCollection $configCollection
     ) {
         $this->phpVersionRow = $phpVersionRow;
@@ -108,6 +112,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $this->minifySettingsRow = $minifySettingsRow;
         $this->varnishHitrateRow = $varnishHitrateRow;
         $this->configCollection = $configCollection;
+        $this->moveScriptRow = $moveScriptRow;
     }
 
 
@@ -185,6 +190,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         array_push($table, $this->asyncIndexingRow->setInputFormat($inputFormat)->getRow());
 
         $table = array_merge($table, $this->minifySettingsRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->moveScriptRow->setInputFormat($inputFormat)->getRow());
 
         if ($input->getOption('format') === null) {
             $section->overwrite(

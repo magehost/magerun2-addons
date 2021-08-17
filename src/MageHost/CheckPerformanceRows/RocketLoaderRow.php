@@ -43,7 +43,7 @@ class RocketLoaderRow extends AbstractRow
             return array(
                 'RocketLoader',
                 $this->formatStatus('STATUS_UNKNOWN'),
-                'Something went wrong while fetching the page.',
+                'Something went wrong while fetching the page',
                 'Enabled'
             );
         }

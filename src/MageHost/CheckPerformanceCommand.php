@@ -21,6 +21,7 @@ use MageHost\CheckPerformanceRows\MoveScriptRow;
 use MageHost\CheckPerformanceRows\LoadtimesRows;
 use MageHost\CheckPerformanceRows\MySQLTableSizeRows;
 use MageHost\CheckPerformanceRows\RocketLoaderRow;
+use MageHost\CheckPerformanceRows\MySQLConfigRow;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -74,6 +75,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
 
     protected $mySQLTableSizeRows;
 
+    protected $mySQLConfigRow;
+
     /**
      * @param PHPVersionRow $phpVersionRow 
      * @param PHPConfigRow $phpConfigRow 
@@ -112,7 +115,8 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         ConfigCollection $configCollection,
         LoadtimesRows $loadtimesRows,
         MySQLTableSizeRows $mySQLTableSizeRows,
-        RocketLoaderRow $rocketLoaderRow
+        RocketLoaderRow $rocketLoaderRow,
+        MySQLConfigRow $mySQLConfigRow
     ) {
         $this->phpVersionRow = $phpVersionRow;
         $this->phpConfigRow = $phpConfigRow;
@@ -132,6 +136,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $this->loadtimesRows = $loadtimesRows;
         $this->mySQLTableSizeRows = $mySQLTableSizeRows;
         $this->rocketLoaderRow = $rocketLoaderRow;
+        $this->mySQLConfigRow = $mySQLConfigRow;
     }
 
 
@@ -183,6 +188,7 @@ class CheckPerformanceCommand extends AbstractMagentoCommand
         $table = array();
         array_push($table, $this->phpVersionRow->setInputFormat($inputFormat)->getRow());
         array_push($table, $this->phpConfigRow->setInputFormat($inputFormat)->getRow());
+        array_push($table, $this->mySQLConfigRow->setInputFormat($inputFormat)->getRow());
         array_push($table, $this->appModeRow->setInputFormat($inputFormat)->getRow());
         array_push($table, $this->httpVersionRow->setInputFormat($inputFormat)->getRow());
         array_push($table, $this->cacheStorageRow->setInputFormat($inputFormat)->getRow(

@@ -32,7 +32,7 @@ class RocketLoaderRow extends AbstractRow
 
         if ($retval == 2) {
             return array(
-                'RocketLoader',
+                'RocketLoader (Cloudflare)',
                 $this->formatStatus('STATUS_PROBLEM'),
                 'No rocketloader injection found.',
                 'Enabled'
@@ -41,7 +41,7 @@ class RocketLoaderRow extends AbstractRow
 
         if ($retval) {
             return array(
-                'RocketLoader',
+                'RocketLoader (Cloudflare)',
                 $this->formatStatus('STATUS_UNKNOWN'),
                 'Something went wrong while fetching the page',
                 'Enabled'
@@ -49,7 +49,7 @@ class RocketLoaderRow extends AbstractRow
         }
 
         return array(
-            'RocketLoader',
+            'RocketLoader (Cloudflare)',
             $this->formatStatus('STATUS_OK'),
             'Enabled',
             'Enabled'

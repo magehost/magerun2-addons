@@ -21,6 +21,11 @@ class MySQLTableSizeRows extends AbstractRow
         'url_rewrite' => 10 * 1000 * 1000,
     );
 
+    /**
+     * @param ResourceConnection $resourceConnection 
+     * 
+     * @return void 
+     */
     public function __construct(ResourceConnection $resourceConnection)
     {
         $this->resourceConnection = $resourceConnection;
@@ -47,7 +52,7 @@ class MySQLTableSizeRows extends AbstractRow
             $connection->query('SELECT SQL_CALC_FOUND_ROWS * FROM `' . $tableName . '`;');
             $rowCount = $connection->fetchRow('SELECT FOUND_ROWS();');
             array_push($result, array(
-                'Rowcount (' . $tableName . ')',
+                'MySQL Rowcount (' . $tableName . ')',
                 $rowCount['FOUND_ROWS()'] < $maxRecords ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
                 $rowCount['FOUND_ROWS()'],
                 '< ' . $maxRecords

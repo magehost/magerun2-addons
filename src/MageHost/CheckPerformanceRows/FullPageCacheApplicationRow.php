@@ -35,7 +35,7 @@ class FullPageCacheApplicationRow extends AbstractRow
         $status = $this->formatStatus('STATUS_OK');
         $message = 'Varnish Cache';
 
-        if (in_array(CacheConfig::BUILT_IN, $cachingApplication)) {
+        if (!in_array(CacheConfig::VARNISH, $cachingApplication)) {
             $status = $this->formatStatus('STATUS_PROBLEM');
             $message = 'Built in';
         }

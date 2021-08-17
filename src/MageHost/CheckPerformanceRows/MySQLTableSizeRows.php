@@ -15,12 +15,10 @@ class MySQLTableSizeRows extends AbstractRow
 
     protected $tablesMaxRecords = array(
         'search_query' => 50 * 1000,
-        'catalogsearch_query' => 500 * 1000,
-        'log_visitor' => 50 * 1000 * 1000,
-        'log_visitor_info' => 50 * 1000 * 1000,
+        'customer_visitor' => 50 * 1000 * 1000,
         'report_event' => 50 * 1000 * 1000,
         'report_viewed_product_index' => 50 * 1000 * 1000,
-        'core_url_rewrite' => 10 * 1000 * 1000,
+        'url_rewrite' => 10 * 1000 * 1000,
     );
 
     public function __construct(ResourceConnection $resourceConnection)

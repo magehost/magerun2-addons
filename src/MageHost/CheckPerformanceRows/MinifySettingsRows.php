@@ -6,11 +6,11 @@ use Magento\Config\Model\ResourceModel\Config\Data\Collection as ConfigCollectio
 use Magento\Store\Model\StoreManagerInterface;
 
 /**
- * Class MinifySettingsRow 
+ * Class MinifySettingsRows
  * 
  * @package MageHost\CheckPerformanceRows
  */
-class MinifySettingsRow extends AbstractRow
+class MinifySettingsRows extends AbstractRow
 {
     protected $storeManager;
 

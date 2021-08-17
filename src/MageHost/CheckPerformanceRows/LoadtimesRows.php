@@ -3,8 +3,11 @@
 namespace MageHost\CheckPerformanceRows;
 
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Url;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
+use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 
 /**
  * Class LoadtimesRows 
@@ -17,6 +20,12 @@ class LoadtimesRows extends AbstractRow
 
     protected $categoryCollection;
 
+    protected $productCollection;
+
+    protected $productStatus;
+
+    protected $productVisibility;
+
     protected $url;
 
     /**
@@ -24,11 +33,14 @@ class LoadtimesRows extends AbstractRow
      * 
      * @return void 
      */
-    public function __construct(StoreManagerInterface $storeManager, CategoryCollectionFactory $categoryCollection, Url $url)
+    public function __construct(StoreManagerInterface $storeManager, CategoryCollection $categoryCollection, Url $url, ProductCollection $productCollection, ProductStatus $productStatus, ProductVisibility $productVisibility)
     {
         $this->storeManager = $storeManager;
         $this->categoryCollection = $categoryCollection;
+        $this->productCollection = $productCollection;
         $this->url = $url;
+        $this->productStatus = $productStatus;
+        $this->productVisibility = $productVisibility;
     }
 
 
@@ -38,20 +50,24 @@ class LoadtimesRows extends AbstractRow
      */
     public function getRow()
     {
+        $defaultStoreId = $this->storeManager->getDefaultStoreView()->getId();
+
         $this->categoryCollection
             ->addAttributeToSelect('*')
             ->addAttributeToFilter('level', 2)
-            ->addAttributeToFilter('is_active', 1)
-            ->getSelect()->limit(1);
-        $defaultStoreId = $this->storeManager->getDefaultStoreView()->getId();
+            ->addAttributeToFilter('is_active', 1);
+
+        $this->productCollection->setStoreId($defaultStoreId)->addCountToCategories($this->categoryCollection);
+        $this->categoryCollection->getSelect()->where('product_count > 5')->limit(1);
+
         $category = $this->categoryCollection->getFirstItem()->setStoreId($defaultStoreId);
 
         $productCollection = $category
             ->getProductCollection();
 
         $productCollection
-            ->addAttributeToFilter('status', 1)
-            ->addAttributeToFilter('visibility', 4)
+            ->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()])
+            ->setVisibility($this->productVisibility->getVisibleInSiteIds())
             ->getSelect()->limit(1);
 
         $product = $productCollection->getFirstItem();

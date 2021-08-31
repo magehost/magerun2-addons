@@ -28,7 +28,7 @@ class RocketLoaderRow extends AbstractRow
     {
         $url = $this->storeManager->getDefaultStoreView()->getBaseUrl();
 
-        exec(dirname(__FILE__) . '/assets/phantomjs '  . dirname(__FILE__)  . '/assets/rocketloader.js ' .  $url . ' 2>&1', $output, $retval);
+        exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/rocketloader.js ' .  $url . ' 2>&1', $output, $retval);
 
         if ($retval == 2) {
             return array(

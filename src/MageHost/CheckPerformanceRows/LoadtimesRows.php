@@ -54,35 +54,34 @@ class LoadtimesRows extends AbstractRow
 
         $this->categoryCollection
             ->addAttributeToSelect('*')
+            ->setStoreId($defaultStoreId)
             ->addAttributeToFilter('level', 2)
             ->addAttributeToFilter('is_active', 1);
 
         $this->productCollection->setStoreId($defaultStoreId)->addCountToCategories($this->categoryCollection);
         $this->categoryCollection->getSelect()->where('product_count > 5')->limit(1);
 
-        $category = $this->categoryCollection->getFirstItem()->setStoreId($defaultStoreId);
+        $category = $this->categoryCollection->getFirstItem();
 
-        $productCollection = $category
-            ->getProductCollection();
-
-        $productCollection
+        $this->productCollection
+            ->setStoreId($defaultStoreId)
             ->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()])
             ->setVisibility($this->productVisibility->getVisibleInSiteIds())
             ->getSelect()->limit(1);
 
-        $product = $productCollection->getFirstItem();
+        $product = $this->productCollection->getFirstItem();
         $pagesToCheck = array(
             'Home' => $this->storeManager->getDefaultStoreView()->getBaseUrl(),
             'Cart' => $this->storeManager->getDefaultStoreView()->getUrl('checkout/cart', ['_secure' => true]),
             'Product'  => $product->getProductUrl(),
-            'Category' => $category->getUrl()
+            'Category' => $category->setStoreId($defaultStoreId)->getUrl()
         );
 
         $result = array();
         foreach ($pagesToCheck as $title => $url) {
             $output = null;
             $retval = null;
-            exec(dirname(__FILE__) . '/assets/phantomjs '  . dirname(__FILE__)  . '/assets/pageload.js ' .  $url . ' 2>&1', $output, $retval);
+            exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/pageload.js ' .  $url . ' 2>&1', $output, $retval);
 
             if ($retval) {
                 array_push($result, array(

@@ -42,7 +42,7 @@ class SessionStorageRow extends AbstractRow
             in_array($saveHandler, $recommended) ? $this->formatStatus('STATUS_OK')
                 : $this->formatStatus('STATUS_PROBLEM'),
             $saveHandler,
-            implode(' or ', $recommended),
+            'redis, memcache or memcached',
         );
     }
 }

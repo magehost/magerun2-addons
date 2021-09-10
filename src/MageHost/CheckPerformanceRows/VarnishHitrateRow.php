@@ -47,7 +47,18 @@ class VarnishHitrateRow extends AbstractRow
             }
         }
 
-        $hitrate = $parsedValues['MAIN.cache_hit'] / ($parsedValues['MAIN.cache_hit'] + $parsedValues['MAIN.cache_miss']);
+        $hitDivision = ($parsedValues['MAIN.cache_hit'] + $parsedValues['MAIN.cache_miss']);
+
+        if ($hitDivision == 0) {
+            return array(
+                'Average Varnish Hitrate',
+                $this->formatStatus('STATUS_UNKNOWN'),
+                'Not enough data to crunch (yet)',
+                '>= 80%',
+            );
+        }
+
+        $hitrate = $parsedValues['MAIN.cache_hit'] / $hitDivision;
         if ($hitrate < '0.8') {
             $status = $this->formatStatus('STATUS_PROBLEM');
         }

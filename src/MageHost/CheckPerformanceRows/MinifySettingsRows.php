@@ -39,7 +39,7 @@ class MinifySettingsRows extends AbstractRow
 
         $result = array();
         $stores = $this->storeManager->getStores();
-
+        $valueMapping = array(0 => '"Disabled"', 1 => '"Enabled"');
 
         foreach ($configs as $key => $config) {
             $ok = true;
@@ -61,7 +61,7 @@ class MinifySettingsRows extends AbstractRow
                         $ok = false;
                     }
 
-                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $configPerScope['stores'][$store->getId()] . ', scope: store');
+                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $valueMapping[$configPerScope['stores'][$store->getId()]] . ', scope: store');
                 }
 
                 if (array_key_exists('websites', $configPerScope) && array_key_exists($store->getWebsiteId(), $configPerScope['websites']) && !isset($value)) {
@@ -69,7 +69,7 @@ class MinifySettingsRows extends AbstractRow
                     if (!$value) {
                         $ok = false;
                     }
-                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $configPerScope['websites'][$store->getWebsiteId()] . ', scope: website');
+                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $valueMapping[$configPerScope['websites'][$store->getWebsiteId()]] . ', scope: website');
                 }
 
                 if (array_key_exists('default', $configPerScope) && array_key_exists(0, $configPerScope['default']) && !isset($value)) {
@@ -77,13 +77,13 @@ class MinifySettingsRows extends AbstractRow
                     if (!$value) {
                         $ok = false;
                     }
-                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $configPerScope['default'][0] . ', scope: default');
+                    array_push($currentResult, 'Store ' . $store->getName() . ' has value ' . $valueMapping[$configPerScope['default'][0]] . ', scope: default');
                 }
 
                 if (!isset($value)) {
                     $value = 0;
                     $ok = false;
-                    array_push($currentResult, 'Store ' . $store->getName() . ' has value 0, scope: none');
+                    array_push($currentResult, 'Store ' . $store->getName() . ' has value Disabled, scope: none');
                 }
 
                 if ($counter == 0) {
@@ -96,7 +96,7 @@ class MinifySettingsRows extends AbstractRow
             }
 
             if ($allStoresHaveSameValue) {
-                $currentResult = array('All stores have value ' . $firstValue);
+                $currentResult = array('All stores have value ' . $valueMapping[$firstValue]);
             }
 
             array_push($result, array($config['title'], $ok ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'), implode("\n", $currentResult), 'Enabled'));

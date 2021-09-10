@@ -88,7 +88,7 @@ class LoadtimesRows extends AbstractRow
                     $title . ' (' . $url . ')',
                     $this->formatStatus('STATUS_UNKNOWN'),
                     'Could not load the URL',
-                    '< 2000ms'
+                    '< 2000 ms'
                 ));
                 continue;
             }
@@ -96,8 +96,8 @@ class LoadtimesRows extends AbstractRow
             array_push($result, array(
                 $title . ' (' . $url . ')',
                 $output[0] < 2000 ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
-                $output[0] . 'ms',
-                '< 2000ms'
+                $output[0] . ' ms',
+                '< 2000 ms'
             ));
         }
 

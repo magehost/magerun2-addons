@@ -46,15 +46,20 @@ class MySQLConfigRow extends AbstractRow
             if ($currentValue['Value'] == $defaultValue) {
                 $ok = false;
             }
-
             $result[$currentValue['Variable_name']] = $currentValue['Value'];
         }
 
         array_walk($result, function (&$value, $key) {
+            if ($key == 'innodb_buffer_pool_size') {
+                $value = $this->formatBytes($value);
+            }
             $value = $key . ' = ' . $value;
         });
 
         array_walk($defaultValues, function (&$value, $key) {
+            if ($key == 'innodb_buffer_pool_size') {
+                $value = $this->formatBytes($value);
+            }
             $value = $key . ' > ' . $value;
         });
 

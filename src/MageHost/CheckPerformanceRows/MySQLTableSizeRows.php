@@ -49,12 +49,11 @@ class MySQLTableSizeRows extends AbstractRow
                 ));
                 continue;
             }
-            $connection->query('SELECT SQL_CALC_FOUND_ROWS * FROM `' . $tableName . '`;');
-            $rowCount = $connection->fetchRow('SELECT FOUND_ROWS();');
+            $rowCount = $connection->fetchRow('SELECT COUNT(*) AS count FROM `' . $tableName . '`;');
             array_push($result, array(
                 'MySQL Rowcount (' . $tableName . ')',
-                $rowCount['FOUND_ROWS()'] < $maxRecords ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
-                $rowCount['FOUND_ROWS()'],
+                $rowCount['count'] < $maxRecords ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
+                $rowCount['count'],
                 '< ' . $maxRecords
             ));
         }

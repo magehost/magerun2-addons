@@ -94,8 +94,7 @@ class LoadtimesRows extends AbstractRow
         foreach ($pagesToCheck as $title => $url) {
             $output = null;
             $retval = null;
-            exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/pageload.js ' .  $url . ' 2>&1', $output, $retval);
-
+            exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/pageload.js ' .  $url . '?mhtime=' . time() . ' 2>&1', $output, $retval);
             if ($retval) {
                 array_push($result, array(
                     $title . ' (' . $url . ')',

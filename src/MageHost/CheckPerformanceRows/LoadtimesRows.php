@@ -62,6 +62,9 @@ class LoadtimesRows extends AbstractRow
             }
         }
 
+        $this->storeManager->setCurrentStore($selectedStoreId);
+        $store = $this->storeManager->getStore($selectedStoreId);
+
         $this->categoryCollection
             ->addAttributeToSelect('*')
             ->setStoreId($selectedStoreId)
@@ -81,8 +84,8 @@ class LoadtimesRows extends AbstractRow
 
         $product = $this->productCollection->getFirstItem();
         $pagesToCheck = array(
-            'Home' => $this->storeManager->getDefaultStoreView()->getBaseUrl(),
-            'Cart' => $this->storeManager->getDefaultStoreView()->getUrl('checkout/cart', ['_secure' => true]),
+            'Home' => $store->getBaseUrl(),
+            'Cart' => $store->getUrl('checkout/cart', ['_secure' => true]),
             'Product'  => $product->getProductUrl(),
             'Category' => $category->setStoreId($selectedStoreId)->getUrl()
         );

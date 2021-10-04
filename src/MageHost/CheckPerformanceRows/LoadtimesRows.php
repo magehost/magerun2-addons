@@ -50,21 +50,31 @@ class LoadtimesRows extends AbstractRow
      */
     public function getRow()
     {
-        $defaultStoreId = $this->storeManager->getDefaultStoreView()->getId();
+        $selectedStoreId = $this->storeManager->getDefaultStoreView()->getId();
+        $stores = $this->storeManager->getStores();
+        // if the count is 0, we are probably dealing with single store mode
+        if (count($stores) > 0) {
+            foreach ($stores as $store) {
+                if ($store->isActive()) {
+                    $selectedStoreId = $store->getId();
+                    break;
+                }
+            }
+        }
 
         $this->categoryCollection
             ->addAttributeToSelect('*')
-            ->setStoreId($defaultStoreId)
+            ->setStoreId($selectedStoreId)
             ->addAttributeToFilter('level', 2)
             ->addAttributeToFilter('is_active', 1);
 
-        $this->productCollection->setStoreId($defaultStoreId)->addCountToCategories($this->categoryCollection);
+        $this->productCollection->setStoreId($selectedStoreId)->addCountToCategories($this->categoryCollection);
         $this->categoryCollection->getSelect()->where('product_count > 5')->limit(1);
 
         $category = $this->categoryCollection->getFirstItem();
 
         $this->productCollection
-            ->setStoreId($defaultStoreId)
+            ->setStoreId($selectedStoreId)
             ->addAttributeToFilter('status', ['in' => $this->productStatus->getVisibleStatusIds()])
             ->setVisibility($this->productVisibility->getVisibleInSiteIds())
             ->getSelect()->limit(1);
@@ -74,7 +84,7 @@ class LoadtimesRows extends AbstractRow
             'Home' => $this->storeManager->getDefaultStoreView()->getBaseUrl(),
             'Cart' => $this->storeManager->getDefaultStoreView()->getUrl('checkout/cart', ['_secure' => true]),
             'Product'  => $product->getProductUrl(),
-            'Category' => $category->setStoreId($defaultStoreId)->getUrl()
+            'Category' => $category->setStoreId($selectedStoreId)->getUrl()
         );
 
         $result = array();

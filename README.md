@@ -1,3 +1,6 @@
+# Discontinued - development continues at git@github.com:Savvii/magerun2-addons.git
+
+
 magerun2 addons
 ==============
 

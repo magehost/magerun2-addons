@@ -28,9 +28,17 @@ class RocketLoaderRow extends AbstractRow
     {
         $url = $this->storeManager->getDefaultStoreView()->getBaseUrl();
 
-        exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/rocketloader.js ' .  $url . ' 2>&1', $output, $retval);
+        $html = file_get_contents($url, false, stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]));
+        if (!$html) {
+            return array(
+                'RocketLoader (Cloudflare)',
+                $this->formatStatus('STATUS_UNKNOWN'),
+                'Something went wrong while fetching the page',
+                'Enabled'
+            );
+        }
 
-        if ($retval == 2) {
+        if (strpos('rocket-loader.min.js', $html) === false) {
             return array(
                 'RocketLoader (Cloudflare)',
                 $this->formatStatus('STATUS_PROBLEM'),
@@ -39,14 +47,7 @@ class RocketLoaderRow extends AbstractRow
             );
         }
 
-        if ($retval) {
-            return array(
-                'RocketLoader (Cloudflare)',
-                $this->formatStatus('STATUS_UNKNOWN'),
-                'Something went wrong while fetching the page',
-                'Enabled'
-            );
-        }
+
 
         return array(
             'RocketLoader (Cloudflare)',

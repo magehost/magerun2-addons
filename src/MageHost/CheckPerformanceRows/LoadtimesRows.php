@@ -92,10 +92,39 @@ class LoadtimesRows extends AbstractRow
 
         $result = array();
         foreach ($pagesToCheck as $title => $url) {
-            $output = null;
-            $retval = null;
-            exec(dirname(__FILE__) . '/assets/phantomjs --ignore-ssl-errors=yes '  . dirname(__FILE__)  . '/assets/pageload.js ' .  $url . '?mhtime=' . time() . ' 2>&1', $output, $retval);
-            if ($retval) {
+            if (!getenv('PAGESPEED_URL') || !getenv('PAGESPEED_TOKEN')) {
+                array_push($result, array(
+                    $title . ' (' . $url . ')',
+                    $this->formatStatus('STATUS_UNKNOWN'),
+                    'Missing required PAGESPEED env variables',
+                    '< 2000 ms'
+                ));
+                continue;
+            }
+
+            $pagespeedUrl = getenv('PAGESPEED_URL') . getenv('PAGESPEED_TOKEN');
+            $postdata = json_encode(['url' => $url]);
+            $ch = curl_init($pagespeedUrl);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            $output = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($code != 200) {
+                array_push($result, array(
+                    $title . ' (' . $url . ')',
+                    $this->formatStatus('STATUS_UNKNOWN'),
+                    'Could not load the URL',
+                    '< 2000 ms'
+                ));
+                continue;
+            }
+
+            $decodedOutput = json_decode($output, true);
+            if (!array_key_exists('observedLoad', $decodedOutput)) {
                 array_push($result, array(
                     $title . ' (' . $url . ')',
                     $this->formatStatus('STATUS_UNKNOWN'),
@@ -107,8 +136,8 @@ class LoadtimesRows extends AbstractRow
 
             array_push($result, array(
                 $title . ' (' . $url . ')',
-                $output[0] < 2000 ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
-                $output[0] . ' ms',
+                $decodedOutput['observedLoad'] < 2000 ? $this->formatStatus('STATUS_OK') : $this->formatStatus('STATUS_PROBLEM'),
+                $decodedOutput['observedLoad'] . ' ms',
                 '< 2000 ms'
             ));
         }
